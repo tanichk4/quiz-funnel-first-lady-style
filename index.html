@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>First Lady Style Quiz</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', 'Times New Roman', serif; background: #faf9f6; color: #2a2520; min-height: 100vh; }
+  
+  .screen { display: none; min-height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; }
+  
+  /* Typography */
+  .serif { font-family: 'Georgia', serif; }
+  .sans { font-family: -apple-system, 'Helvetica Neue', sans-serif; }
+  
+  /* Hero screen */
+  .hero-img {
+    height: 52vh;
+    background: linear-gradient(170deg, #c9b99a 0%, #8a7560 40%, #4a3c30 100%);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .hero-img::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, transparent 40%, rgba(20,16,12,0.55) 100%);
+  }
+  .hero-monogram {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    color: rgba(255,255,255,0.18); font-size: 180px; font-family: Georgia, serif;
+    font-style: italic; letter-spacing: -8px; line-height: 1; z-index: 1;
+    user-select: none;
+  }
+  .hero-label {
+    position: absolute; bottom: 1.25rem; left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,0.72); font-family: -apple-system, sans-serif;
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase; z-index: 2;
+  }
+  
+  .hero-body { background: #faf9f6; padding: 2rem 1.5rem 2.5rem; flex: 1; display: flex; flex-direction: column; gap: 1rem; }
+  .hero-title { font-family: Georgia, serif; font-size: 26px; font-weight: 400; line-height: 1.25; color: #1e1a16; letter-spacing: -0.3px; }
+  .hero-sub { font-family: -apple-system, sans-serif; font-size: 15px; color: #6b5e50; line-height: 1.65; }
+  .trust-line { font-family: -apple-system, sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9e8e7e; }
+  
+  /* Buttons */
+  .btn-primary {
+    display: block; width: 100%; padding: 16px 24px; margin-top: auto;
+    background: #2a2520; color: #faf9f6;
+    border: none; border-radius: 2px;
+    font-family: -apple-system, sans-serif; font-size: 13px; letter-spacing: 2.5px; text-transform: uppercase;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .btn-primary:hover { background: #3d342b; }
+  
+  .btn-outline {
+    display: block; width: 100%; padding: 16px 24px; margin-top: auto;
+    background: transparent; color: #2a2520;
+    border: 1px solid #c5b09a; border-radius: 2px;
+    font-family: -apple-system, sans-serif; font-size: 13px; letter-spacing: 2.5px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-outline:hover { background: #f0ece5; }
+  
+  /* Quiz screens */
+  .quiz-header { padding: 1.25rem 1.5rem 0; }
+  .progress-bar { height: 1px; background: #e8e0d4; margin-bottom: 0.75rem; }
+  .progress-fill { height: 1px; background: #8a7560; transition: width 0.4s ease; }
+  .progress-text { font-family: -apple-system, sans-serif; font-size: 11px; color: #a89880; letter-spacing: 1.5px; text-transform: uppercase; }
+  
+  .quiz-body { padding: 2rem 1.5rem; flex: 1; display: flex; flex-direction: column; gap: 1.5rem; }
+  .quiz-q { font-family: Georgia, serif; font-size: 21px; font-weight: 400; line-height: 1.3; color: #1e1a16; }
+  
+  .option-list { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    padding: 14px 18px; border: 1px solid #ddd5c8; border-radius: 2px; background: #faf9f6;
+    font-family: -apple-system, sans-serif; font-size: 14px; color: #3d322a; line-height: 1.4;
+    cursor: pointer; transition: all 0.15s; text-align: left;
+  }
+  .option:hover { border-color: #8a7560; background: #f5f0e8; }
+  .option.selected { border-color: #2a2520; background: #f0ece5; color: #1e1a16; }
+  .option.multi-selected { border-color: #2a2520; background: #f0ece5; }
+  
+  .multi-hint { font-family: -apple-system, sans-serif; font-size: 11px; color: #a89880; letter-spacing: 1px; text-transform: uppercase; }
+  
+  /* Reinforcement screens */
+  .reinforce-img {
+    height: 36vh; flex-shrink: 0;
+    background: linear-gradient(150deg, #e8ddd0 0%, #b5a090 50%, #7a6555 100%);
+    position: relative; display: flex; align-items: center; justify-content: center;
+  }
+  .reinforce-deco { color: rgba(255,255,255,0.15); font-family: Georgia, serif; font-size: 120px; font-style: italic; }
+  .reinforce-body { padding: 2rem 1.5rem; flex: 1; display: flex; flex-direction: column; gap: 1rem; }
+  .reinforce-title { font-family: Georgia, serif; font-size: 24px; font-weight: 400; line-height: 1.2; color: #1e1a16; }
+  .reinforce-copy { font-family: -apple-system, sans-serif; font-size: 15px; color: #6b5e50; line-height: 1.65; }
+  
+  /* Analysis */
+  .analysis-screen { background: #1e1a16; color: #faf9f6; justify-content: center; align-items: center; gap: 2rem; padding: 2.5rem 2rem; }
+  .analysis-icon { width: 56px; height: 56px; border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .analysis-title { font-family: Georgia, serif; font-size: 22px; font-weight: 400; text-align: center; }
+  .analysis-steps { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+  .analysis-step { display: flex; align-items: center; gap: 12px; font-family: -apple-system, sans-serif; font-size: 13px; color: rgba(255,255,255,0.6); letter-spacing: 0.3px; }
+  .step-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.25); flex-shrink: 0; transition: background 0.5s; }
+  .step-dot.lit { background: #c9b99a; }
+  .analysis-foot { font-family: -apple-system, sans-serif; font-size: 11px; color: rgba(255,255,255,0.35); letter-spacing: 2px; text-transform: uppercase; }
+  
+  /* Email */
+  .email-screen { padding: 2.5rem 1.5rem; justify-content: center; }
+  .email-eyebrow { font-family: -apple-system, sans-serif; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #9e8e7e; margin-bottom: 1rem; }
+  .email-title { font-family: Georgia, serif; font-size: 26px; font-weight: 400; line-height: 1.2; color: #1e1a16; margin-bottom: 1rem; }
+  .email-sub { font-family: -apple-system, sans-serif; font-size: 15px; color: #6b5e50; line-height: 1.6; margin-bottom: 2rem; }
+  .email-input {
+    display: block; width: 100%; padding: 14px 18px; margin-bottom: 12px;
+    border: 1px solid #c5b09a; border-radius: 2px; background: #fff;
+    font-family: -apple-system, sans-serif; font-size: 15px; color: #2a2520;
+    outline: none;
+  }
+  .email-input:focus { border-color: #8a7560; }
+  .privacy-line { font-family: -apple-system, sans-serif; font-size: 11px; color: #a89880; text-align: center; margin-top: 1rem; line-height: 1.5; }
+  
+  /* Pre-offer */
+  .preoffer-screen { padding: 2rem 1.5rem; }
+  .preoffer-card {
+    border: 1px solid #e0d5c8; border-radius: 2px; padding: 1.75rem 1.5rem; margin: 1.5rem 0;
+    background: #fdf9f4;
+  }
+  .dossier-label { font-family: -apple-system, sans-serif; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #9e8e7e; margin-bottom: 0.75rem; }
+  .bullet-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 1rem; }
+  .bullet-list li { display: flex; align-items: flex-start; gap: 10px; font-family: -apple-system, sans-serif; font-size: 14px; color: #4a3c30; line-height: 1.4; }
+  .bullet-list li::before { content: '—'; color: #8a7560; flex-shrink: 0; }
+  .urgency { font-family: -apple-system, sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #8a7560; text-align: center; margin: 1rem 0; }
+  
+  /* Paywall */
+  .paywall-screen { padding: 2rem 1.5rem 3rem; }
+  .plan-cards { display: flex; flex-direction: column; gap: 10px; margin: 1.5rem 0; }
+  .plan-card {
+    border: 1px solid #ddd5c8; border-radius: 2px; padding: 1.25rem; cursor: pointer;
+    background: #faf9f6; transition: all 0.15s; position: relative;
+  }
+  .plan-card.featured { border-color: #2a2520; }
+  .plan-card.selected { border-color: #2a2520; background: #f5f0e8; }
+  .plan-badge {
+    position: absolute; top: -1px; right: 16px;
+    background: #2a2520; color: #faf9f6;
+    font-family: -apple-system, sans-serif; font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    padding: 4px 10px;
+  }
+  .plan-name { font-family: Georgia, serif; font-size: 16px; color: #1e1a16; }
+  .plan-desc { font-family: -apple-system, sans-serif; font-size: 12px; color: #9e8e7e; margin-top: 2px; }
+  .plan-price { font-family: Georgia, serif; font-size: 22px; color: #1e1a16; margin-top: 8px; }
+  .plan-price span { font-family: -apple-system, sans-serif; font-size: 12px; color: #9e8e7e; }
+  
+  .countdown { text-align: center; font-family: -apple-system, sans-serif; font-size: 13px; color: #6b5e50; margin: 1rem 0; }
+  .countdown strong { font-size: 18px; letter-spacing: 2px; color: #2a2520; }
+  .trust-bullets { margin: 1rem 0; display: flex; flex-direction: column; gap: 6px; }
+  .trust-bullets p { font-family: -apple-system, sans-serif; font-size: 12px; color: #9e8e7e; display: flex; align-items: center; gap: 8px; }
+  .trust-bullets p::before { content: '✦'; font-size: 8px; color: #c5b09a; }
+  .foot-note { font-family: -apple-system, sans-serif; font-size: 11px; color: #b5a08e; text-align: center; margin-top: 1rem; }
+  
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(20,16,12,0.6); z-index: 100; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: #faf9f6; width: 100%; max-width: 480px; border-radius: 2px 2px 0 0; padding: 2rem 1.5rem 2.5rem; }
+  .modal-title { font-family: Georgia, serif; font-size: 20px; color: #1e1a16; margin-bottom: 1.5rem; }
+  .modal-selected { background: #f0ece5; padding: 12px 16px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+  .modal-plan-name { font-family: -apple-system, sans-serif; font-size: 13px; color: #6b5e50; }
+  .modal-plan-price { font-family: Georgia, serif; font-size: 16px; color: #1e1a16; }
+  .modal-pay-label { font-family: -apple-system, sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9e8e7e; margin-bottom: 10px; }
+  .pay-method { display: flex; gap: 10px; margin-bottom: 1.5rem; }
+  .pay-btn {
+    flex: 1; padding: 14px; border: 1px solid #ddd5c8; border-radius: 2px;
+    background: #fff; cursor: pointer; font-family: -apple-system, sans-serif;
+    font-size: 14px; color: #2a2520; transition: all 0.15s;
+  }
+  .pay-btn:hover { border-color: #8a7560; background: #f5f0e8; }
+  .pay-btn.selected { border-color: #2a2520; background: #f0ece5; }
+  .secure-line { font-family: -apple-system, sans-serif; font-size: 11px; color: #a89880; text-align: center; margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  
+  /* Confirmation */
+  .confirm-screen { background: #1e1a16; color: #faf9f6; justify-content: center; align-items: center; gap: 1.5rem; padding: 3rem 2rem; }
+  .confirm-monogram { font-family: Georgia, serif; font-size: 64px; font-style: italic; color: rgba(255,255,255,0.08); }
+  .confirm-title { font-family: Georgia, serif; font-size: 22px; font-weight: 400; text-align: center; line-height: 1.3; }
+  .confirm-body { font-family: -apple-system, sans-serif; font-size: 14px; color: rgba(255,255,255,0.55); text-align: center; line-height: 1.7; }
+  .confirm-steps { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 1rem; }
+  .confirm-step { font-family: -apple-system, sans-serif; font-size: 13px; color: rgba(255,255,255,0.45); display: flex; align-items: center; gap: 10px; }
+  .confirm-step .step-dot { background: rgba(255,255,255,0.15); }
+  .confirm-step .step-dot.lit { background: #c9b99a; }
+  .confirm-foot { font-family: -apple-system, sans-serif; font-size: 11px; color: rgba(255,255,255,0.25); letter-spacing: 2px; text-transform: uppercase; margin-top: 2rem; }
+  
+  /* Divider */
+  .divider { height: 1px; background: #e8e0d4; margin: 1rem 0; }
+  
+  /* Value bullets paywall */
+  .value-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin: 1.25rem 0; }
+  .value-list li { font-family: -apple-system, sans-serif; font-size: 13px; color: #4a3c30; display: flex; gap: 10px; line-height: 1.4; }
+  .value-list li::before { content: '—'; color: #8a7560; flex-shrink: 0; }
+
+  .eyebrow { font-family: -apple-system, sans-serif; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #9e8e7e; margin-bottom: 0.5rem; }
+  .section-title { font-family: Georgia, serif; font-size: 22px; font-weight: 400; color: #1e1a16; line-height: 1.25; margin-bottom: 0.5rem; }
+  .section-sub { font-family: -apple-system, sans-serif; font-size: 14px; color: #6b5e50; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1: START -->
+<div class="screen active" id="s-start">
+  <div class="hero-img">
+    <div class="hero-monogram">FL</div>
+    <div class="hero-label">Personal Style Experience</div>
+  </div>
+  <div class="hero-body">
+    <p class="eyebrow">Style Quiz</p>
+    <h1 class="hero-title">Discover your personal First Lady style code</h1>
+    <p class="hero-sub">Take this refined style quiz to reveal the wardrobe direction, silhouettes, and polished outfit formulas that suit your life best.</p>
+    <p class="trust-line">Personalized in just a few minutes</p>
+    <button class="btn-primary" onclick="goTo('s-q1', 0)" style="margin-top:1.5rem">Start the quiz</button>
+  </div>
+</div>
+
+<!-- SCREEN 2: Q1 Age -->
+<div class="screen" id="s-q1">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:5%"></div></div>
+    <p class="progress-text">1 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">Which age group are you in?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-intro')">40–44</button>
+      <button class="option" onclick="selectOption(this,'s-intro')">45–49</button>
+      <button class="option" onclick="selectOption(this,'s-intro')">50–55</button>
+      <button class="option" onclick="selectOption(this,'s-intro')">56+</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3: INTRO VALUE -->
+<div class="screen" id="s-intro">
+  <div class="reinforce-img">
+    <div class="reinforce-deco">✦</div>
+  </div>
+  <div class="reinforce-body">
+    <h2 class="reinforce-title">A polished wardrobe starts with the right style direction</h2>
+    <p class="reinforce-copy">We'll use your answers to identify the elegance level, wardrobe structure, and visual balance that feel most natural on you — so your style looks refined, effortless, and true to who you are.</p>
+    <button class="btn-primary" onclick="goTo('s-q2', 10)">Continue</button>
+  </div>
+</div>
+
+<!-- Q2 -->
+<div class="screen" id="s-q2">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:10%"></div></div>
+    <p class="progress-text">2 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">How satisfied are you with your current style?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q3')">Very satisfied</button>
+      <button class="option" onclick="selectOption(this,'s-q3')">Somewhat satisfied</button>
+      <button class="option" onclick="selectOption(this,'s-q3')">Somewhat dissatisfied</button>
+      <button class="option" onclick="selectOption(this,'s-q3')">Very dissatisfied</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q3 -->
+<div class="screen" id="s-q3">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:15%"></div></div>
+    <p class="progress-text">3 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">Which best describes your wardrobe right now?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q4')">I have many clothes, but outfits still feel inconsistent</button>
+      <button class="option" onclick="selectOption(this,'s-q4')">My wardrobe feels practical, but not refined</button>
+      <button class="option" onclick="selectOption(this,'s-q4')">I mostly repeat the same safe outfits</button>
+      <button class="option" onclick="selectOption(this,'s-q4')">I feel like my style no longer reflects who I am</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q4 -->
+<div class="screen" id="s-q4">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div>
+    <p class="progress-text">4 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">What is your biggest challenge when getting dressed?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q5')">Making outfits feel polished</button>
+      <button class="option" onclick="selectOption(this,'s-q5')">Knowing what flatters me</button>
+      <button class="option" onclick="selectOption(this,'s-q5')">Choosing the right pieces for different occasions</button>
+      <button class="option" onclick="selectOption(this,'s-q5')">Making my wardrobe feel more cohesive</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q5 -->
+<div class="screen" id="s-q5">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:24%"></div></div>
+    <p class="progress-text">5 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">Which body shape feels closest to yours?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-r1')">Balanced</button>
+      <button class="option" onclick="selectOption(this,'s-r1')">Curved</button>
+      <button class="option" onclick="selectOption(this,'s-r1')">Straight</button>
+      <button class="option" onclick="selectOption(this,'s-r1')">I'm not sure</button>
+    </div>
+  </div>
+</div>
+
+<!-- REINFORCE 1 -->
+<div class="screen" id="s-r1">
+  <div class="reinforce-img">
+    <div class="reinforce-deco" style="font-size:80px; color:rgba(255,255,255,0.12)">✦ ✦</div>
+  </div>
+  <div class="reinforce-body">
+    <h2 class="reinforce-title">Elegance is not about having more clothes</h2>
+    <p class="reinforce-copy">It's about knowing what works together, what flatters you, and how to create a wardrobe that looks composed in every setting.</p>
+    <button class="btn-primary" onclick="goTo('s-q6', 29)">Continue</button>
+  </div>
+</div>
+
+<!-- Q6 Multi -->
+<div class="screen" id="s-q6">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:29%"></div></div>
+    <p class="progress-text">6 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">In which settings do you most want to look polished?</h2>
+    <p class="multi-hint">Select all that apply</p>
+    <div class="option-list">
+      <button class="option" onclick="toggleMulti(this)">Work or business settings</button>
+      <button class="option" onclick="toggleMulti(this)">Social events and dinners</button>
+      <button class="option" onclick="toggleMulti(this)">Everyday errands and daytime outings</button>
+      <button class="option" onclick="toggleMulti(this)">Travel</button>
+      <button class="option" onclick="toggleMulti(this)">Special occasions</button>
+    </div>
+    <button class="btn-primary" onclick="goTo('s-q7', 33)" style="margin-top:1rem">Continue</button>
+  </div>
+</div>
+
+<!-- Q7 -->
+<div class="screen" id="s-q7">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:33%"></div></div>
+    <p class="progress-text">7 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">Which best describes your current lifestyle?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q8')">Mostly professional and work-focused</button>
+      <button class="option" onclick="selectOption(this,'s-q8')">A mix of work, social events, and family life</button>
+      <button class="option" onclick="selectOption(this,'s-q8')">Socially active with frequent outings</button>
+      <button class="option" onclick="selectOption(this,'s-q8')">Flexible and lifestyle-led</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q8 -->
+<div class="screen" id="s-q8">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:38%"></div></div>
+    <p class="progress-text">8 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">How do you want people to perceive your style?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q9')">Elegant and confident</button>
+      <button class="option" onclick="selectOption(this,'s-q9')">Refined and feminine</button>
+      <button class="option" onclick="selectOption(this,'s-q9')">Modern and sophisticated</button>
+      <button class="option" onclick="selectOption(this,'s-q9')">Timeless and effortlessly put-together</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q9 -->
+<div class="screen" id="s-q9">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:43%"></div></div>
+    <p class="progress-text">9 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">What matters most to you in everyday dressing?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q10')">Elegance</button>
+      <button class="option" onclick="selectOption(this,'s-q10')">Comfort</button>
+      <button class="option" onclick="selectOption(this,'s-q10')">Versatility</button>
+      <button class="option" onclick="selectOption(this,'s-q10')">Confidence</button>
+      <button class="option" onclick="selectOption(this,'s-q10')">Simplicity</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q10 -->
+<div class="screen" id="s-q10">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:48%"></div></div>
+    <p class="progress-text">10 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">How much time do you usually want to spend choosing an outfit?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-r2')">Under 5 minutes</button>
+      <button class="option" onclick="selectOption(this,'s-r2')">5–10 minutes</button>
+      <button class="option" onclick="selectOption(this,'s-r2')">10–15 minutes</button>
+      <button class="option" onclick="selectOption(this,'s-r2')">I don't mind taking more time if it looks right</button>
+    </div>
+  </div>
+</div>
+
+<!-- REINFORCE 2 -->
+<div class="screen" id="s-r2">
+  <div class="reinforce-img" style="background: linear-gradient(150deg,#d4c8b8 0%,#9e8e7e 50%,#5a4e43 100%);">
+    <div class="reinforce-deco" style="font-size:90px; color:rgba(255,255,255,0.1)">✦</div>
+  </div>
+  <div class="reinforce-body">
+    <h2 class="reinforce-title">Your most refined style is built with clarity</h2>
+    <p class="reinforce-copy">The right wardrobe feels intentional, confident, and effortless — not overdone, not outdated, and never uncertain.</p>
+    <button class="btn-primary" onclick="goTo('s-q11', 52)">Continue</button>
+  </div>
+</div>
+
+<!-- Q11 -->
+<div class="screen" id="s-q11">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:52%"></div></div>
+    <p class="progress-text">11 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">What frustrates you most about your wardrobe?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q12')">It feels cluttered but uninspiring</button>
+      <button class="option" onclick="selectOption(this,'s-q12')">I buy pieces that don't work well together</button>
+      <button class="option" onclick="selectOption(this,'s-q12')">My outfits often feel too plain</button>
+      <button class="option" onclick="selectOption(this,'s-q12')">I'm not sure what truly suits me anymore</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q12 -->
+<div class="screen" id="s-q12">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:57%"></div></div>
+    <p class="progress-text">12 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">What style mistake do you most want to avoid?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q13')">Looking outdated</button>
+      <button class="option" onclick="selectOption(this,'s-q13')">Looking overdressed</button>
+      <button class="option" onclick="selectOption(this,'s-q13')">Looking too casual</button>
+      <button class="option" onclick="selectOption(this,'s-q13')">Looking like I'm trying too hard</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q13 -->
+<div class="screen" id="s-q13">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:62%"></div></div>
+    <p class="progress-text">13 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">What usually prevents you from looking more put-together?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q14')">I don't have a clear style direction</button>
+      <button class="option" onclick="selectOption(this,'s-q14')">I don't have enough outfit formulas</button>
+      <button class="option" onclick="selectOption(this,'s-q14')">I shop without a plan</button>
+      <button class="option" onclick="selectOption(this,'s-q14')">I struggle to balance elegance and practicality</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q14 -->
+<div class="screen" id="s-q14">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:67%"></div></div>
+    <p class="progress-text">14 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">When you try to refresh your wardrobe, what usually happens?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q15')">I buy a few pieces, but nothing really changes</button>
+      <button class="option" onclick="selectOption(this,'s-q15')">I get overwhelmed by options</button>
+      <button class="option" onclick="selectOption(this,'s-q15')">I keep postponing it</button>
+      <button class="option" onclick="selectOption(this,'s-q15')">I'm not sure what to invest in first</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q15 -->
+<div class="screen" id="s-q15">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:71%"></div></div>
+    <p class="progress-text">15 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">Which overall style mood feels most like you?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q16')">Classic and composed</button>
+      <button class="option" onclick="selectOption(this,'s-q16')">Soft and feminine</button>
+      <button class="option" onclick="selectOption(this,'s-q16')">Modern and structured</button>
+      <button class="option" onclick="selectOption(this,'s-q16')">Refined and understated</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q16 -->
+<div class="screen" id="s-q16">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:76%"></div></div>
+    <p class="progress-text">16 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">Which color palette feels most appealing to you?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q17')">Neutrals and soft tones</button>
+      <button class="option" onclick="selectOption(this,'s-q17')">Deep, rich tones</button>
+      <button class="option" onclick="selectOption(this,'s-q17')">Light, clean tones</button>
+      <button class="option" onclick="selectOption(this,'s-q17')">A balanced mix of neutrals with a few accent colors</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q17 -->
+<div class="screen" id="s-q17">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:81%"></div></div>
+    <p class="progress-text">17 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">Which silhouette direction do you feel most drawn to?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q18')">Tailored and structured</button>
+      <button class="option" onclick="selectOption(this,'s-q18')">Soft and flowing</button>
+      <button class="option" onclick="selectOption(this,'s-q18')">Balanced and minimal</button>
+      <button class="option" onclick="selectOption(this,'s-q18')">Clean lines with subtle femininity</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q18 -->
+<div class="screen" id="s-q18">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:86%"></div></div>
+    <p class="progress-text">18 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">What does looking polished mean to you?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q19')">Looking refined without seeming overdone</button>
+      <button class="option" onclick="selectOption(this,'s-q19')">Looking confident in every setting</button>
+      <button class="option" onclick="selectOption(this,'s-q19')">Looking elegant in a natural way</button>
+      <button class="option" onclick="selectOption(this,'s-q19')">Having outfits that always feel appropriate and elevated</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q19 -->
+<div class="screen" id="s-q19">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:90%"></div></div>
+    <p class="progress-text">19 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">How do you usually shop for clothes?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q20')">Intentionally, when I need something specific</button>
+      <button class="option" onclick="selectOption(this,'s-q20')">Occasionally, but without a clear plan</button>
+      <button class="option" onclick="selectOption(this,'s-q20')">Seasonally, when I feel I need a refresh</button>
+      <button class="option" onclick="selectOption(this,'s-q20')">Spontaneously, when something catches my eye</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q20 -->
+<div class="screen" id="s-q20">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:95%"></div></div>
+    <p class="progress-text">20 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">What result would be most valuable to you right now?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-q21')">A clear personal style direction</button>
+      <button class="option" onclick="selectOption(this,'s-q21')">A refined capsule wardrobe plan</button>
+      <button class="option" onclick="selectOption(this,'s-q21')">Ready-to-use outfit combinations</button>
+      <button class="option" onclick="selectOption(this,'s-q21')">Better clarity on what to buy and what to skip</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q21 -->
+<div class="screen" id="s-q21">
+  <div class="quiz-header">
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <p class="progress-text">21 of 21</p>
+  </div>
+  <div class="quiz-body">
+    <h2 class="quiz-q">What would make a personalized style plan feel truly worth it to you?</h2>
+    <div class="option-list">
+      <button class="option" onclick="selectOption(this,'s-analysis')">Recommendations tailored to my lifestyle</button>
+      <button class="option" onclick="selectOption(this,'s-analysis')">A wardrobe plan that feels elegant and realistic</button>
+      <button class="option" onclick="selectOption(this,'s-analysis')">Outfit formulas I can actually use</button>
+      <button class="option" onclick="selectOption(this,'s-analysis')">Guidance that saves me time, money, and uncertainty</button>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYSIS -->
+<div class="screen analysis-screen" id="s-analysis">
+  <div class="analysis-icon">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+  </div>
+  <h2 class="analysis-title" style="font-size:20px;">Analyzing your style profile…</h2>
+  <div class="analysis-steps">
+    <div class="analysis-step"><div class="step-dot" id="dot1"></div>Reviewing your lifestyle needs</div>
+    <div class="analysis-step"><div class="step-dot" id="dot2"></div>Identifying your wardrobe patterns</div>
+    <div class="analysis-step"><div class="step-dot" id="dot3"></div>Defining your most flattering style direction</div>
+    <div class="analysis-step"><div class="step-dot" id="dot4"></div>Preparing your personal style dossier</div>
+  </div>
+  <p class="analysis-foot">Your results are almost ready</p>
+</div>
+
+<!-- EMAIL CAPTURE -->
+<div class="screen email-screen" id="s-email">
+  <div style="max-width:340px; width:100%; margin: auto; display:flex; flex-direction:column; gap:0;">
+    <p class="email-eyebrow">Your result is ready</p>
+    <h2 class="email-title">Your personalized result is ready</h2>
+    <p class="email-sub">Enter your email to unlock your personal style dossier and refined wardrobe plan.</p>
+    <input class="email-input" type="email" placeholder="Enter your email address" id="email-field">
+    <button class="btn-primary" onclick="goTo('s-preoffer',100)">Unlock my result</button>
+    <p class="privacy-line">We respect your privacy and never share your information.</p>
+  </div>
+</div>
+
+<!-- PRE-OFFER -->
+<div class="screen" id="s-preoffer" style="padding:2rem 1.5rem; flex-direction:column; gap:1rem;">
+  <p class="eyebrow">Your dossier</p>
+  <h2 class="section-title">Your personal style dossier is ready</h2>
+  <p class="section-sub">Based on your answers, we've prepared a refined style profile designed to help you look polished, elegant, and effortlessly put-together.</p>
+  <div class="preoffer-card">
+    <p class="dossier-label">What's included</p>
+    <ul class="bullet-list">
+      <li>Personalized style direction</li>
+      <li>Capsule wardrobe guidance</li>
+      <li>Outfit formulas for real-life occasions</li>
+      <li>Clarity on what to buy and what to avoid</li>
+    </ul>
+  </div>
+  <p class="urgency">Reserved for you for the next 15 minutes</p>
+  <button class="btn-primary" onclick="goTo('s-paywall',100)">View my plan</button>
+</div>
+
+<!-- PAYWALL -->
+<div class="screen" id="s-paywall" style="padding:2rem 1.5rem 3rem; flex-direction:column; gap:1rem; overflow-y:auto;">
+  <p class="eyebrow">Access your plan</p>
+  <h2 class="section-title">Unlock your refined style plan</h2>
+  <p class="section-sub">Get instant access to your personalized style dossier and elegant wardrobe strategy.</p>
+  
+  <ul class="value-list">
+    <li>Personalized style profile based on your answers</li>
+    <li>Refined capsule wardrobe plan</li>
+    <li>Outfit formulas for work, events, and everyday life</li>
+    <li>Recommended silhouettes and color direction</li>
+    <li>Clear guidance on what to buy next</li>
+  </ul>
+  
+  <div class="divider"></div>
+  
+  <p style="font-family:-apple-system,sans-serif; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#9e8e7e;">Choose your access plan</p>
+  
+  <div class="plan-cards" id="plan-cards">
+    <div class="plan-card" onclick="selectPlan(this,'Monthly','$14.99/mo')">
+      <p class="plan-name">Monthly</p>
+      <p class="plan-desc">For a simple short-term start</p>
+      <p class="plan-price">$14.99 <span>/ month</span></p>
+    </div>
+    <div class="plan-card featured selected" onclick="selectPlan(this,'Quarterly','$9.99/mo')">
+      <div class="plan-badge">Most popular</div>
+      <p class="plan-name">Quarterly</p>
+      <p class="plan-desc">Three months of refined guidance</p>
+      <p class="plan-price">$9.99 <span>/ month · billed $29.97</span></p>
+    </div>
+    <div class="plan-card" onclick="selectPlan(this,'Yearly','$6.99/mo')">
+      <p class="plan-name">Yearly</p>
+      <p class="plan-desc">Best value</p>
+      <p class="plan-price">$6.99 <span>/ month · billed $83.88</span></p>
+    </div>
+  </div>
+  
+  <div class="countdown">
+    Your reserved introductory offer expires in:<br>
+    <strong id="timer">14:59</strong>
+  </div>
+  
+  <div class="trust-bullets">
+    <p>Designed for real-life elegance</p>
+    <p>Built to save time, reduce guesswork, and elevate your wardrobe</p>
+    <p>Tailored to your lifestyle and style goals</p>
+  </div>
+  
+  <button class="btn-primary" onclick="openModal()">Continue to payment</button>
+  <p class="foot-note">Secure checkout. Cancel according to plan terms.</p>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <h3 class="modal-title">Select your payment method</h3>
+    <div class="modal-selected">
+      <span class="modal-plan-name" id="modal-plan-name">Quarterly Plan</span>
+      <span class="modal-plan-price" id="modal-plan-price">$9.99/mo</span>
+    </div>
+    <p class="modal-pay-label">Payment method</p>
+    <div class="pay-method">
+      <button class="pay-btn" id="pay-paypal" onclick="selectPay('paypal')">PayPal</button>
+      <button class="pay-btn" id="pay-card" onclick="selectPay('card')">Credit Card</button>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+      <span style="font-family:-apple-system,sans-serif; font-size:13px; color:#6b5e50;">Total today</span>
+      <span style="font-family:Georgia,serif; font-size:18px; color:#1e1a16;" id="modal-total">$29.97</span>
+    </div>
+    <button class="btn-primary" onclick="goTo('s-confirm',100); closeModal()">Complete purchase</button>
+    <p class="secure-line">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a89880" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Secure encrypted checkout
+    </p>
+  </div>
+</div>
+
+<!-- CONFIRMATION -->
+<div class="screen confirm-screen" id="s-confirm">
+  <div class="confirm-monogram">FL</div>
+  <h2 class="confirm-title">Your refined style experience is being prepared</h2>
+  <p class="confirm-body">We're now finalizing your access and getting your personalized style plan ready.</p>
+  <div class="confirm-steps">
+    <div class="confirm-step"><div class="step-dot" id="cdot1"></div>Preparing your wardrobe guidance</div>
+    <div class="confirm-step"><div class="step-dot" id="cdot2"></div>Unlocking your style dossier</div>
+    <div class="confirm-step"><div class="step-dot" id="cdot3"></div>Redirecting you securely</div>
+  </div>
+  <p class="confirm-foot">Please wait a moment…</p>
+</div>
+
+<script>
+  let selectedPlanName = 'Quarterly Plan';
+  let selectedPlanPrice = '$9.99/mo';
+  let selectedPlanTotal = '$29.97';
+  let selectedPayMethod = null;
+  let timerInterval = null;
+  let timerSecs = 14 * 60 + 59;
+
+  function goTo(id, progress) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const sc = document.getElementById(id);
+    if (sc) { sc.classList.add('active'); window.scrollTo(0,0); }
+    if (id === 's-analysis') startAnalysis();
+    if (id === 's-paywall') startTimer();
+    if (id === 's-confirm') startConfirm();
+  }
+
+  function selectOption(btn, next) {
+    const list = btn.closest('.option-list');
+    list.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+    btn.classList.add('selected');
+    setTimeout(() => goTo(next, null), 320);
+  }
+
+  function toggleMulti(btn) {
+    btn.classList.toggle('multi-selected');
+    btn.classList.toggle('selected');
+  }
+
+  function selectPlan(card, name, price) {
+    document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedPlanName = name + ' Plan';
+    selectedPlanPrice = price;
+    const totals = {'Monthly':'$14.99','Quarterly':'$29.97','Yearly':'$83.88'};
+    selectedPlanTotal = totals[name] || price;
+  }
+
+  function openModal() {
+    document.getElementById('modal-plan-name').textContent = selectedPlanName;
+    document.getElementById('modal-plan-price').textContent = selectedPlanPrice;
+    document.getElementById('modal-total').textContent = selectedPlanTotal;
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('modal').classList.remove('open'); }
+  function closeModalOutside(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+
+  function selectPay(method) {
+    selectedPayMethod = method;
+    document.getElementById('pay-paypal').classList.toggle('selected', method === 'paypal');
+    document.getElementById('pay-card').classList.toggle('selected', method === 'card');
+  }
+
+  function startAnalysis() {
+    const dots = ['dot1','dot2','dot3','dot4'];
+    let i = 0;
+    const iv = setInterval(() => {
+      if (i < dots.length) { document.getElementById(dots[i]).classList.add('lit'); i++; }
+      else { clearInterval(iv); setTimeout(() => goTo('s-email', 100), 600); }
+    }, 900);
+  }
+
+  function startTimer() {
+    if (timerInterval) return;
+    timerInterval = setInterval(() => {
+      timerSecs--;
+      if (timerSecs < 0) { clearInterval(timerInterval); timerSecs = 0; }
+      const m = Math.floor(timerSecs / 60);
+      const s = timerSecs % 60;
+      const el = document.getElementById('timer');
+      if (el) el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+    }, 1000);
+  }
+
+  function startConfirm() {
+    const dots = ['cdot1','cdot2','cdot3'];
+    let i = 0;
+    const iv = setInterval(() => {
+      if (i < dots.length) { document.getElementById(dots[i]).classList.add('lit'); i++; }
+      else clearInterval(iv);
+    }, 1200);
+  }
+</script>
+</body>
+</html>
